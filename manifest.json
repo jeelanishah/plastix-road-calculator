@@ -1,0 +1,9 @@
+{
+  "name": "PLASTIX Road Calculator",
+  "short_name": "PLASTIX",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f7fb",
+  "theme_color": "#1f6feb",
+  "icons": []
+}
