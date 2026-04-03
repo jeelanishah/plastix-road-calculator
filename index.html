@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLASTIX Road Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; max-width: 760px; margin: auto; background:#f7f7fb; }
+    h1 { margin: 0 0 6px; }
+    .sub { color:#444; margin: 0 0 16px; }
+    .card { background:#fff; padding:16px; border-radius:12px; border:1px solid #e6e6ef; margin-top: 14px; }
+    label { display:block; margin-top: 12px; font-weight: 600; }
+    input { width: 100%; padding: 10px; font-size: 16px; margin-top: 6px; border-radius: 10px; border:1px solid #ccc; }
+    .row { display:flex; gap: 10px; flex-wrap: wrap; }
+    .row > div { flex: 1; min-width: 160px; }
+    .big { font-size: 18px; }
+    button { width:100%; margin-top: 12px; padding: 12px; font-size: 16px; border:0; border-radius: 10px; background:#1f6feb; color:#fff; font-weight:700; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi { padding: 12px; border-radius: 12px; background: #f2f6ff; border:1px solid #dbe7ff; }
+    .kpi b { display:block; margin-bottom: 4px; }
+    @media (max-width:600px){ .grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <h1>PLASTIX — Plastic Road Calculator</h1>
+  <p class="sub">Enter road details → get plastic required, volume, mass instantly.</p>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Road Length (m)</label>
+        <input id="length" type="number" value="5000">
+      </div>
+      <div>
+        <label>Road Width (m)</label>
+        <input id="width" type="number" value="8">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Layer Thickness (cm)</label>
+        <input id="thickness" type="number" value="7.5" step="0.1">
+      </div>
+      <div>
+        <label>Plastic Content (%)</label>
+        <input id="plasticPct" type="number" value="9" step="0.1">
+      </div>
+    </div>
+
+    <label>Mix Density (kg/m³)</label>
+    <input id="density" type="number" value="2100">
+
+    <button onclick="calc()">Calculate</button>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Results</h2>
+    <div class="grid">
+      <div class="kpi"><b>Road Volume</b><span class="big" id="volume">—</span> m³</div>
+      <div class="kpi"><b>Layer Mass</b><span class="big" id="mass">—</span> tonnes</div>
+      <div class="kpi"><b>Plastic Required</b><span class="big" id="plastic">—</span> tonnes</div>
+      <div class="kpi"><b>Plastic Diverted</b><span class="big" id="diverted">—</span> tonnes</div>
+    </div>
+  </div>
+
+  <script>
+    function calc() {
+      const L = Number(document.getElementById('length').value);
+      const W = Number(document.getElementById('width').value);
+      const Tcm = Number(document.getElementById('thickness').value);
+      const pct = Number(document.getElementById('plasticPct').value);
+      const density = Number(document.getElementById('density').value);
+
+      const Tm = Tcm / 100;
+      const volume = L * W * Tm;
+      const massTonnes = (volume * density) / 1000;
+      const plasticTonnes = massTonnes * (pct / 100);
+
+      document.getElementById('volume').innerText = volume.toFixed(2);
+      document.getElementById('mass').innerText = massTonnes.toFixed(2);
+      document.getElementById('plastic').innerText = plasticTonnes.toFixed(2);
+      document.getElementById('diverted').innerText = plasticTonnes.toFixed(2);
+    }
+
+    document.querySelectorAll('input').forEach(i => i.addEventListener('input', calc));
+    calc();
+  </script>
+</body>
+</html>
