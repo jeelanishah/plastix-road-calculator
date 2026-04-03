@@ -23,7 +23,26 @@
 </head>
 <body>
   <h1>PLASTIX — Plastic Road Calculator</h1>
-  <p class="sub">Enter road details → get plastic required, volume, mass instantly.</p>
+  <p class="sub">Enter road details → get plastic required, volume, mass instantly.<div class="card">
+  <h2 style="margin-top:0;">1) Capture Road Photo</h2>
+
+  <input
+    id="photoInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+    style="margin-top:10px;"
+  />
+
+  <p style="color:#444; margin:10px 0 0;">
+    Tip: Use the back camera. After you take a photo, it will appear below.
+  </p>
+
+  <div id="photoWrap" style="margin-top:12px; display:none;">
+    <img id="photoPreview" alt="Road photo" style="width:100%; border-radius:12px; border:1px solid #ddd;" />
+  </div>
+</div>
+</p>
 
   <div class="card">
     <div class="row">
@@ -85,6 +104,18 @@
 
     document.querySelectorAll('input').forEach(i => i.addEventListener('input', calc));
     calc();
+    const photoInput = document.getElementById("photoInput");
+const photoWrap = document.getElementById("photoWrap");
+const photoPreview = document.getElementById("photoPreview");
+
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files && photoInput.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  photoPreview.src = url;
+  photoWrap.style.display = "block";
+});
   </script>
 </body>
 </html>
