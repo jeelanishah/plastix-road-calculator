@@ -1,58 +1,96 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PLASTIX Road Calculator</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1f6feb" />
+
   <style>
-    body { font-family: Arial, sans-serif; padding: 16px; max-width: 760px; margin: auto; background:#f7f7fb; }
+    :root{
+      --bg:#f7f7fb; --card:#fff; --text:#111; --muted:#444;
+      --brand:#1f6feb; --border:#e6e6ef; --soft:#f2f6ff;
+    }
+    body { font-family: Arial, sans-serif; padding: 16px; max-width: 900px; margin: auto; background:var(--bg); color:var(--text); }
     h1 { margin: 0 0 6px; }
-    .sub { color:#444; margin: 0 0 16px; }
-    .card { background:#fff; padding:16px; border-radius:12px; border:1px solid #e6e6ef; margin-top: 14px; }
-    label { display:block; margin-top: 12px; font-weight: 600; }
-    input { width: 100%; padding: 10px; font-size: 16px; margin-top: 6px; border-radius: 10px; border:1px solid #ccc; }
+    .sub { color:var(--muted); margin: 0 0 14px; }
+    .card { background:var(--card); padding:16px; border-radius:12px; border:1px solid var(--border); margin-top: 14px; }
+    label { display:block; margin-top: 12px; font-weight: 700; }
+    input, select { width: 100%; padding: 10px; font-size: 16px; margin-top: 6px; border-radius: 10px; border:1px solid #ccc; }
     .row { display:flex; gap: 10px; flex-wrap: wrap; }
-    .row > div { flex: 1; min-width: 160px; }
-    .big { font-size: 18px; }
-    button { width:100%; margin-top: 12px; padding: 12px; font-size: 16px; border:0; border-radius: 10px; background:#1f6feb; color:#fff; font-weight:700; }
+    .row > div { flex: 1; min-width: 180px; }
+    .big { font-size: 18px; font-weight: 700; }
+    button { width:100%; margin-top: 12px; padding: 12px; font-size: 16px; border:0; border-radius: 10px; background:var(--brand); color:#fff; font-weight:800; }
+    button.secondary{ background:#111; }
+    button.ghost{ background:#fff; color:#111; border:1px solid #ddd; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .kpi { padding: 12px; border-radius: 12px; background: #f2f6ff; border:1px solid #dbe7ff; }
-    .kpi b { display:block; margin-bottom: 4px; }
-    @media (max-width:600px){ .grid{ grid-template-columns:1fr; } }
+    .kpi { padding: 12px; border-radius: 12px; background: var(--soft); border:1px solid #dbe7ff; }
+    .kpi b { display:block; margin-bottom: 6px; }
+    .hint{ color:var(--muted); font-size: 13px; margin-top: 6px; }
+    .pill{ display:inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; border:1px solid #ddd; background:#fff; margin-left:8px; }
+    .small{ font-size: 13px; color:var(--muted); }
+    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .toggle{ display:flex; gap:8px; align-items:center; }
+    @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
+    @media print{
+      body{ background:#fff; }
+      .no-print{ display:none !important; }
+      .card{ border:1px solid #ddd; }
+    }
   </style>
 </head>
 <body>
-  <h1>PLASTIX — Plastic Road Calculator</h1>
-  <p class="sub">Enter road details → get plastic required, volume, mass instantly.<div class="card">
-  <h2 style="margin-top:0;">1) Capture Road Photo</h2>
 
-  <input
-    id="photoInput"
-    type="file"
-    accept="image/*"
-    capture="environment"
-    style="margin-top:10px;"
-  />
-
-  <p style="color:#444; margin:10px 0 0;">
-    Tip: Use the back camera. After you take a photo, it will appear below.
-  </p>
-
-  <div id="photoWrap" style="margin-top:12px; display:none;">
-    <img id="photoPreview" alt="Road photo" style="width:100%; border-radius:12px; border:1px solid #ddd;" />
+  <div class="topbar">
+    <div>
+      <h1>PLASTIX — Plastic Road Calculator</h1>
+      <p class="sub">Mobile-first calculator for your road model + carbon credits. Works offline (PWA).</p>
+    </div>
+    <div class="toggle no-print">
+      <span class="pill" id="offlineBadge">Online</span>
+      <button class="ghost" type="button" onclick="copyShareLink()">Copy Share Link</button>
+    </div>
   </div>
-</div>
-</p>
 
+  <!-- 0) Quick demo -->
+  <div class="card no-print">
+    <h2 style="margin-top:0;">0) Quick Demo</h2>
+    <div class="row">
+      <div>
+        <button type="button" onclick="loadExample()">Load 5km Example</button>
+        <div class="hint">Loads: 5000m × 8m × 7.5cm @ 9% plastic</div>
+      </div>
+      <div>
+        <button class="secondary" type="button" onclick="loadModelExample()">Load Model Example</button>
+        <div class="hint">Loads: 0.30m × 0.10m × 1.0cm (demo tile)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1) Camera -->
+  <div class="card no-print">
+    <h2 style="margin-top:0;">1) Capture Road Photo (Optional)</h2>
+    <input id="photoInput" type="file" accept="image/*" capture="environment" />
+    <div class="hint">Take a photo of your cardboard/plastic road model for your demo report.</div>
+    <div id="photoWrap" style="margin-top:12px; display:none;">
+      <img id="photoPreview" alt="Road photo" style="width:100%; border-radius:12px; border:1px solid #ddd;" />
+    </div>
+  </div>
+
+  <!-- 2) Inputs -->
   <div class="card">
+    <h2 style="margin-top:0;">2) Road Inputs</h2>
+
     <div class="row">
       <div>
         <label>Road Length (m)</label>
-        <input id="length" type="number" value="5000">
+        <input id="length" type="number" value="5000" step="0.01">
       </div>
       <div>
         <label>Road Width (m)</label>
-        <input id="width" type="number" value="8">
+        <input id="width" type="number" value="8" step="0.01">
       </div>
     </div>
 
@@ -60,62 +98,416 @@
       <div>
         <label>Layer Thickness (cm)</label>
         <input id="thickness" type="number" value="7.5" step="0.1">
+        <div class="hint">For model: measure thickness with ruler (e.g., 1.0 cm)</div>
       </div>
       <div>
         <label>Plastic Content (%)</label>
         <input id="plasticPct" type="number" value="9" step="0.1">
+        <div class="hint">Typical: 6–10%</div>
       </div>
     </div>
 
-    <label>Mix Density (kg/m³)</label>
-    <input id="density" type="number" value="2100">
-
-    <button onclick="calc()">Calculate</button>
+    <button class="no-print" type="button" onclick="calc()">Calculate</button>
   </div>
 
+  <!-- 3) Assumptions -->
   <div class="card">
-    <h2 style="margin-top:0;">Results</h2>
-    <div class="grid">
-      <div class="kpi"><b>Road Volume</b><span class="big" id="volume">—</span> m³</div>
-      <div class="kpi"><b>Layer Mass</b><span class="big" id="mass">—</span> tonnes</div>
-      <div class="kpi"><b>Plastic Required</b><span class="big" id="plastic">—</span> tonnes</div>
-      <div class="kpi"><b>Plastic Diverted</b><span class="big" id="diverted">—</span> tonnes</div>
+    <h2 style="margin-top:0;">3) Carbon & Cost Assumptions (Editable)</h2>
+
+    <div class="row">
+      <div>
+        <label>Mix Density (kg/m³)</label>
+        <input id="density" type="number" value="2100">
+      </div>
+      <div>
+        <label>Carbon Price (₹/tCO₂)</label>
+        <input id="carbonPrice" type="number" value="2000">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Baseline Emissions (tCO₂ per tonne mix)</label>
+        <input id="baselineEF" type="number" value="0.20" step="0.01">
+      </div>
+      <div>
+        <label>Plastic Emissions (tCO₂ per tonne plastic)</label>
+        <input id="plasticEF" type="number" value="0.05" step="0.01">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Baseline Cost (₹/tonne mix)</label>
+        <input id="baselineCost" type="number" value="6000">
+      </div>
+      <div>
+        <label>Plastic Road Cost (₹/tonne mix)</label>
+        <input id="plasticCost" type="number" value="5800">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Jobs Multiplier (jobs per tonne plastic)</label>
+        <input id="jobsPerT" type="number" value="0.2" step="0.01">
+      </div>
+      <div>
+        <label>Collector Payment (₹/kg plastic) (optional)</label>
+        <input id="collectorPay" type="number" value="0" step="1">
+      </div>
+    </div>
+
+    <div class="hint">
+      Method A: CO₂ saved = (mix mass × baseline EF) − (plastic mass × plastic EF). Carbon revenue = CO₂ saved × carbon price.
     </div>
   </div>
 
-  <script>
-    function calc() {
-      const L = Number(document.getElementById('length').value);
-      const W = Number(document.getElementById('width').value);
-      const Tcm = Number(document.getElementById('thickness').value);
-      const pct = Number(document.getElementById('plasticPct').value);
-      const density = Number(document.getElementById('density').value);
+  <!-- 4) Results -->
+  <div class="card" id="resultsCard">
+    <h2 style="margin-top:0;">4) Results (kg-first)</h2>
 
-      const Tm = Tcm / 100;
-      const volume = L * W * Tm;
-      const massTonnes = (volume * density) / 1000;
-      const plasticTonnes = massTonnes * (pct / 100);
+    <div class="grid">
+      <div class="kpi"><b>Road Volume</b><span class="big" id="volume">—</span> m³</div>
 
-      document.getElementById('volume').innerText = volume.toFixed(2);
-      document.getElementById('mass').innerText = massTonnes.toFixed(2);
-      document.getElementById('plastic').innerText = plasticTonnes.toFixed(2);
-      document.getElementById('diverted').innerText = plasticTonnes.toFixed(2);
-    }
+      <div class="kpi"><b>Layer Mass</b><span class="big" id="massKg">—</span> kg
+        <div class="small">(<span id="massT">—</span> tonnes)</div>
+      </div>
 
-    document.querySelectorAll('input').forEach(i => i.addEventListener('input', calc));
+      <div class="kpi"><b>Plastic Required</b><span class="big" id="plasticKg">—</span> kg
+        <div class="small">(<span id="plasticT">—</span> tonnes)</div>
+      </div>
+
+      <div class="kpi"><b>CO₂ Saved</b><span class="big" id="co2">—</span> tCO₂</div>
+
+      <div class="kpi"><b>Baseline Cost</b>₹<span class="big" id="baseCostOut">—</span></div>
+      <div class="kpi"><b>Plastic Road Cost</b>₹<span class="big" id="plastCostOut">—</span></div>
+
+      <div class="kpi"><b>Cost Savings</b>₹<span class="big" id="savings">—</span></div>
+      <div class="kpi"><b>Savings (%)</b><span class="big" id="savingsPct">—</span>%</div>
+
+      <div class="kpi"><b>Carbon Revenue</b>₹<span class="big" id="carbonRev">—</span></div>
+      <div class="kpi"><b>Jobs Created</b><span class="big" id="jobs">—</span></div>
+
+      <div class="kpi"><b>Collector Payout</b>₹<span class="big" id="collectorOut">—</span></div>
+      <div class="kpi"><b>Total Economic Value</b>₹<span class="big" id="totalValue">—</span></div>
+    </div>
+
+    <div class="card no-print" style="margin-top:14px; background:#fff;">
+      <h3 style="margin-top:0;">5) Export / Share</h3>
+      <div class="row">
+        <div>
+          <button type="button" onclick="downloadJSON()">Download JSON</button>
+          <div class="hint">For spreadsheet / records.</div>
+        </div>
+        <div>
+          <button class="secondary" type="button" onclick="downloadCSV()">Download CSV</button>
+          <div class="hint">Open in Excel/Sheets.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <button type="button" onclick="printPDF()">Export PDF (Print)</button>
+          <div class="hint">Most reliable on phones. Choose “Save as PDF”.</div>
+        </div>
+        <div>
+          <button class="ghost" type="button" onclick="emailResults()">Email Results</button>
+          <div class="hint">Opens mail app with prefilled details.</div>
+        </div>
+      </div>
+
+      <div class="hint">
+        For judges: show photo + inputs + results, then export PDF.
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ---------- Helpers ----------
+  function num(id) { return Number(document.getElementById(id).value || 0); }
+  function setVal(id, v) { document.getElementById(id).value = v; }
+
+  function formatINR(x) { return Math.round(x).toLocaleString("en-IN"); }
+
+  function currentState() {
+    return {
+      length_m: num("length"),
+      width_m: num("width"),
+      thickness_cm: num("thickness"),
+      plastic_pct: num("plasticPct"),
+      density_kg_m3: num("density"),
+      carbon_price_inr_per_tco2: num("carbonPrice"),
+      baseline_ef_tco2_per_t: num("baselineEF"),
+      plastic_ef_tco2_per_t_plastic: num("plasticEF"),
+      baseline_cost_inr_per_t: num("baselineCost"),
+      plastic_cost_inr_per_t: num("plasticCost"),
+      jobs_per_t_plastic: num("jobsPerT"),
+      collector_pay_inr_per_kg: num("collectorPay"),
+      photo_attached: !!(document.getElementById("photoPreview").src),
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  function compute(state) {
+    const Tm = state.thickness_cm / 100;
+    const volume_m3 = state.length_m * state.width_m * Tm;
+
+    const mass_kg = volume_m3 * state.density_kg_m3;
+    const mass_t = mass_kg / 1000;
+
+    const plastic_t = mass_t * (state.plastic_pct / 100);
+    const plastic_kg = plastic_t * 1000;
+
+    // Method A (demo + transparent)
+    const baseline_co2 = mass_t * state.baseline_ef_tco2_per_t;
+    const plastic_co2 = plastic_t * state.plastic_ef_tco2_per_t_plastic;
+    const co2_saved_t = baseline_co2 - plastic_co2;
+
+    const baseline_cost_total = mass_t * state.baseline_cost_inr_per_t;
+    const plastic_cost_total = mass_t * state.plastic_cost_inr_per_t;
+    const savings_inr = baseline_cost_total - plastic_cost_total;
+    const savings_pct = baseline_cost_total > 0 ? (savings_inr / baseline_cost_total) * 100 : 0;
+
+    const carbon_revenue_inr = co2_saved_t * state.carbon_price_inr_per_tco2;
+    const jobs = plastic_t * state.jobs_per_t_plastic;
+
+    const collector_payout_inr = plastic_kg * state.collector_pay_inr_per_kg;
+
+    const total_value_inr = savings_inr + carbon_revenue_inr;
+
+    return {
+      volume_m3,
+      mass_kg, mass_t,
+      plastic_kg, plastic_t,
+      co2_saved_t,
+      baseline_cost_total,
+      plastic_cost_total,
+      savings_inr,
+      savings_pct,
+      carbon_revenue_inr,
+      jobs,
+      collector_payout_inr,
+      total_value_inr
+    };
+  }
+
+  // ---------- UI Actions ----------
+  function loadExample() {
+    setVal("length", 5000);
+    setVal("width", 8);
+    setVal("thickness", 7.5);
+    setVal("plasticPct", 9);
+    setVal("density", 2100);
+    setVal("carbonPrice", 2000);
+    setVal("baselineEF", 0.20);
+    setVal("plasticEF", 0.05);
+    setVal("baselineCost", 6000);
+    setVal("plasticCost", 5800);
+    setVal("jobsPerT", 0.2);
+    setVal("collectorPay", 0);
     calc();
-    const photoInput = document.getElementById("photoInput");
-const photoWrap = document.getElementById("photoWrap");
-const photoPreview = document.getElementById("photoPreview");
+  }
 
-photoInput.addEventListener("change", () => {
-  const file = photoInput.files && photoInput.files[0];
-  if (!file) return;
+  function loadModelExample() {
+    setVal("length", 0.30);
+    setVal("width", 0.10);
+    setVal("thickness", 1.0);
+    setVal("plasticPct", 9);
+    setVal("density", 2100);
+    setVal("carbonPrice", 2000);
+    setVal("baselineEF", 0.20);
+    setVal("plasticEF", 0.05);
+    setVal("baselineCost", 6000);
+    setVal("plasticCost", 5800);
+    setVal("jobsPerT", 0.2);
+    setVal("collectorPay", 0);
+    calc();
+  }
 
-  const url = URL.createObjectURL(file);
-  photoPreview.src = url;
-  photoWrap.style.display = "block";
-});
-  </script>
+  function calc() {
+    const state = currentState();
+    const r = compute(state);
+
+    document.getElementById("volume").innerText = r.volume_m3.toFixed(6);
+
+    document.getElementById("massKg").innerText = r.mass_kg.toFixed(1);
+    document.getElementById("massT").innerText = r.mass_t.toFixed(6);
+
+    document.getElementById("plasticKg").innerText = r.plastic_kg.toFixed(1);
+    document.getElementById("plasticT").innerText = r.plastic_t.toFixed(6);
+
+    document.getElementById("co2").innerText = r.co2_saved_t.toFixed(6);
+
+    document.getElementById("baseCostOut").innerText = formatINR(r.baseline_cost_total);
+    document.getElementById("plastCostOut").innerText = formatINR(r.plastic_cost_total);
+    document.getElementById("savings").innerText = formatINR(r.savings_inr);
+    document.getElementById("savingsPct").innerText = r.savings_pct.toFixed(2);
+
+    document.getElementById("carbonRev").innerText = formatINR(r.carbon_revenue_inr);
+    document.getElementById("jobs").innerText = r.jobs.toFixed(2);
+    document.getElementById("collectorOut").innerText = formatINR(r.collector_payout_inr);
+    document.getElementById("totalValue").innerText = formatINR(r.total_value_inr);
+
+    // persist scenario
+    localStorage.setItem("plastix_state", JSON.stringify(state));
+  }
+
+  function copyShareLink() {
+    const s = currentState();
+    const params = new URLSearchParams();
+    for (const [k,v] of Object.entries(s)) {
+      if (typeof v === "number") params.set(k, String(v));
+    }
+    const url = `${location.origin}${location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(url);
+    alert("Share link copied!");
+  }
+
+  function applyFromURL() {
+    const p = new URLSearchParams(location.search);
+    const map = {
+      length_m: "length", width_m: "width", thickness_cm: "thickness",
+      plastic_pct: "plasticPct", density_kg_m3: "density",
+      carbon_price_inr_per_tco2: "carbonPrice",
+      baseline_ef_tco2_per_t: "baselineEF",
+      plastic_ef_tco2_per_t_plastic: "plasticEF",
+      baseline_cost_inr_per_t: "baselineCost",
+      plastic_cost_inr_per_t: "plasticCost",
+      jobs_per_t_plastic: "jobsPerT",
+      collector_pay_inr_per_kg: "collectorPay",
+    };
+    let applied = false;
+    for (const [param, id] of Object.entries(map)) {
+      if (p.has(param)) { document.getElementById(id).value = p.get(param); applied = true; }
+    }
+    return applied;
+  }
+
+  function restoreFromStorage() {
+    const raw = localStorage.getItem("plastix_state");
+    if (!raw) return false;
+    try {
+      const s = JSON.parse(raw);
+      if (typeof s.length_m === "number") {
+        setVal("length", s.length_m);
+        setVal("width", s.width_m);
+        setVal("thickness", s.thickness_cm);
+        setVal("plasticPct", s.plastic_pct);
+        setVal("density", s.density_kg_m3);
+        setVal("carbonPrice", s.carbon_price_inr_per_tco2);
+        setVal("baselineEF", s.baseline_ef_tco2_per_t);
+        setVal("plasticEF", s.plastic_ef_tco2_per_t_plastic);
+        setVal("baselineCost", s.baseline_cost_inr_per_t);
+        setVal("plasticCost", s.plastic_cost_inr_per_t);
+        setVal("jobsPerT", s.jobs_per_t_plastic);
+        setVal("collectorPay", s.collector_pay_inr_per_kg);
+        return true;
+      }
+    } catch {}
+    return false;
+  }
+
+  function download(filename, text) {
+    const a = document.createElement("a");
+    a.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+    a.setAttribute("download", filename);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function downloadJSON() {
+    const state = currentState();
+    const res = compute(state);
+    download("plastix-report.json", JSON.stringify({ state, results: res }, null, 2));
+  }
+
+  function downloadCSV() {
+    const state = currentState();
+    const res = compute(state);
+    const rows = [
+      ["field","value"],
+      ...Object.entries(state),
+      ["---","---"],
+      ...Object.entries(res)
+    ];
+    const csv = rows.map(r => r.map(x => `"${String(x).replaceAll('"','""')}"`).join(",")).join("\n");
+    download("plastix-report.csv", csv);
+  }
+
+  function printPDF() {
+    window.print(); // user selects "Save as PDF"
+  }
+
+  function emailResults() {
+    const s = currentState();
+    const r = compute(s);
+    const body =
+`PLASTIX Road Calculator Report
+
+Inputs:
+- Length: ${s.length_m} m
+- Width: ${s.width_m} m
+- Thickness: ${s.thickness_cm} cm
+- Plastic: ${s.plastic_pct} %
+- Density: ${s.density_kg_m3} kg/m³
+
+Carbon:
+- CO2 saved: ${r.co2_saved_t.toFixed(6)} tCO2
+- Carbon price: ₹${s.carbon_price_inr_per_tco2}/tCO2
+- Carbon revenue: ₹${formatINR(r.carbon_revenue_inr)}
+
+Materials:
+- Mix mass: ${r.mass_kg.toFixed(1)} kg
+- Plastic required: ${r.plastic_kg.toFixed(1)} kg
+
+Economic:
+- Savings: ₹${formatINR(r.savings_inr)}
+- Total value: ₹${formatINR(r.total_value_inr)}
+`;
+    const subject = encodeURIComponent("PLASTIX Road Calculator Report");
+    const mailto = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
+    location.href = mailto;
+  }
+
+  // ---------- Camera preview ----------
+  const photoInput = document.getElementById("photoInput");
+  const photoWrap = document.getElementById("photoWrap");
+  const photoPreview = document.getElementById("photoPreview");
+  photoInput.addEventListener("change", () => {
+    const file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    photoPreview.src = url;
+    photoWrap.style.display = "block";
+  });
+
+  // ---------- Offline badge ----------
+  const badge = document.getElementById("offlineBadge");
+  function updateOnlineBadge(){
+    const online = navigator.onLine;
+    badge.textContent = online ? "Online" : "Offline";
+    badge.style.borderColor = online ? "#ddd" : "#1f6feb";
+  }
+  window.addEventListener("online", updateOnlineBadge);
+  window.addEventListener("offline", updateOnlineBadge);
+
+  // ---------- Service worker (offline PWA) ----------
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      try { await navigator.serviceWorker.register("./service-worker.js"); }
+      catch (e) { /* ignore */ }
+    });
+  }
+
+  // ---------- Init ----------
+  // priority: URL params -> localStorage -> default
+  const applied = applyFromURL();
+  if (!applied) restoreFromStorage();
+  document.querySelectorAll("input").forEach(i => i.addEventListener("input", calc));
+  updateOnlineBadge();
+  calc();
+</script>
 </body>
 </html>
